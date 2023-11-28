@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from utils import *
 
-prefix = "med"
+prefix = "low"
 
 if prefix == "low":
     PATH = 'images/Low concentration 1.tiff'
@@ -18,4 +18,4 @@ elif prefix == "high":
 im = read_tiff(PATH)
 im = im[:60] if prefix=="med" else im
 im = isotropic_interpolation(im)
-segmentate_matrix(im, prefix)
+segmentate_matrix(im, prefix, save=False)

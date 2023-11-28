@@ -64,6 +64,8 @@ def isotropic_interpolation(matrix):
 
 def equalize(matrix):
     max_value = np.max(matrix)
+    if max_value == 0:
+        return matrix
     return matrix / max_value * 255
 
 def initial_segmentation(img, umbral, prefix):
@@ -176,7 +178,7 @@ def colorize_image(segmentated, regions_found, path):
         img = regions_found[h].astype(np.int64)
         colorized = label2rgb(img, image=mask, bg_label=0)
         colorized = equalize(colorized).astype(np.uint8)
-        save_rgb_image(colorized, f'{PATH}{path}_{h}.png')
+        save_rgb_image(colorized, f'{PATH}classification_outputs/{path}_{h}.png')
 
 def skeletonize_image(image):
     skeleton = skeletonize(image)
@@ -202,14 +204,17 @@ def separate_hifas_length(hifas, hifas_labels):
     return length_dict
 
 
-def segmentate_matrix(matrix, prefix):
+def segmentate_matrix(matrix, prefix, save=False):
     segmentated = []
     for i in range(matrix.shape[0]):
         segmentated.append(segmentation(i, matrix, prefix))
+        if save: save_image(segmentated[i], f'{PATH}segmentation_outputs/{prefix}_{i}_segmentation.png')
     regions_found = region_growing3D(np.array(segmentated))
     props_dict = get_props_per_region(regions_found)
     regions_found = remove_noise(regions_found, props_dict)
     spores, hifas, hifas_labels = classification(regions_found, props_dict)
-    contours = ske.get_contours(regions_found, hifas_labels, prefix, save_image, equalize) 
-    # colorize_image(segmentated, spores, "high_spores")
-    # colorize_image(segmentated, hifas, "high_hifas")
+    if save:
+        colorize_image(segmentated, spores, f"{prefix}_spores")
+        colorize_image(segmentated, hifas, f"{prefix}_hifas")
+    contours = ske.get_contours(regions_found, hifas_labels, prefix, save_image, equalize, save=save) 
+    
