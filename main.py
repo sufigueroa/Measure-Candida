@@ -18,4 +18,4 @@ elif prefix == "high":
 im = read_tiff(PATH)
 im = im[:60] if prefix=="med" else im
 im = isotropic_interpolation(im)
-segmentate_matrix(im, prefix, save=False)
+segmentate_matrix(im, prefix, save=True)
