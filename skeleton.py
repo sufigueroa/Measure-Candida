@@ -110,15 +110,17 @@ def max_dist_3D(hifa, contour, contours_pos):
         point = points_to_visit.popleft()
         if contour[point]: continue
         neighbours = get_neigh(point, (Z, Y, X))
-        min_dist = 255
+        min_dist = None
         for neigh in neighbours:
             if not hifa[neigh]: continue
             if not contour[neigh]:
                 points_to_visit.append(neigh)
                 continue
             distance = contour[neigh]
-            if distance < min_dist:
+            if (min_dist == None) or (distance < min_dist):
                 min_dist = distance
+        if min_dist == None:
+            min_dist = np.max(contour)
         contour[point] = min_dist + 1
     
     return contour
@@ -137,6 +139,6 @@ def get_contours(hifas, label_hifas, prefix, save_image, equalize, save=False):
                 save_image(equalize(contour[i]), f'{PATH}contour_outputs/{prefix}_ID{label_hifa}_{i}_contour.png')
         
         distance = esqueletonize_3D(hifa, contour, contours_pos)
-        if save:
+        if True:
             for i in range(len(distance)):
                 save_image(equalize(distance[i]), f'{PATH}distance_outputs/{prefix}_ID{label_hifa}_{i}_distance.png')

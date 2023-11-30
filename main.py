@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from utils import *
 
-prefix = "low"
+prefix = "med"
 
 if prefix == "low":
     PATH = 'images/Low concentration 1.tiff'
