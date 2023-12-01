@@ -1,5 +1,6 @@
 from skimage.measure import regionprops, find_contours, label
 import numpy as np
+import pickle
 from collections import deque
 
 PATH = 'results/'
@@ -105,6 +106,8 @@ def max_dist_3D(hifa, contour, contours_pos):
         for neigh in neighbours:
             if hifa[neigh] and not contour[neigh]:
                 points_to_visit.append(neigh)
+                # if neigh not in points_to_visit:
+                #     points_to_visit.append(neigh)
 
     while len(points_to_visit) > 0:
         point = points_to_visit.popleft()
@@ -113,6 +116,7 @@ def max_dist_3D(hifa, contour, contours_pos):
         min_dist = None
         for neigh in neighbours:
             if not hifa[neigh]: continue
+            # if not contour[neigh] and neigh not in points_to_visit:
             if not contour[neigh]:
                 points_to_visit.append(neigh)
                 continue
@@ -125,20 +129,50 @@ def max_dist_3D(hifa, contour, contours_pos):
     
     return contour
 
-def esqueletonize_3D(hifa, contour, contours_pos):
-    return max_dist_3D(hifa, contour, contours_pos)
+def esqueletonize_3D(distance):
+    pixeles = np.where(distance[0] > 0)
+    print(pixeles)
 
-def get_contours(hifas, label_hifas, prefix, save_image, equalize, save=False):
+    return distance
+
+def get_contours(hifas, label_hifas, prefix, save_image, equalize, save=False, load=[True, True, True, False]):
     for label_hifa in label_hifas:
-        hifa = np.zeros(hifas.shape)
-        hifa[hifas == label_hifa] = 1
-
-        contour, contours_pos = only_contours(hifa)
-        if save:
-            for i in range(len(contour)):
-                save_image(equalize(contour[i]), f'{PATH}contour_outputs/{prefix}_ID{label_hifa}_{i}_contour.png')
+        if load[1]:
+            with open(f'{PATH}contour_outputs/{prefix}_ID{label_hifa}_hifa.pkl', 'rb') as f:
+                hifa = pickle.load(f)
+            with open(f'{PATH}contour_outputs/{prefix}_ID{label_hifa}_contour.pkl', 'rb') as f:
+                contour = pickle.load(f)
+            with open(f'{PATH}contour_outputs/{prefix}_ID{label_hifa}_contour_pos.pkl', 'rb') as f:
+                contours_pos = pickle.load(f)
+            print(f"Contour ID{label_hifa} loaded!!")
+        else:      
+            hifa = np.zeros(hifas.shape)
+            hifa[hifas == label_hifa] = 1
+            contour, contours_pos = only_contours(hifa)
         
-        distance = esqueletonize_3D(hifa, contour, contours_pos)
-        if True:
-            for i in range(len(distance)):
-                save_image(equalize(distance[i]), f'{PATH}distance_outputs/{prefix}_ID{label_hifa}_{i}_distance.png')
+            if save:
+                with open(f'{PATH}contour_outputs/{prefix}_ID{label_hifa}_contour.pkl', 'wb') as f:
+                    pickle.dump(contour, f)
+                with open(f'{PATH}contour_outputs/{prefix}_ID{label_hifa}_contour_pos.pkl', 'wb') as f:
+                    pickle.dump(contours_pos, f)
+                with open(f'{PATH}contour_outputs/{prefix}_ID{label_hifa}_hifa.pkl', 'wb') as f:
+                    pickle.dump(hifa, f)
+                for i in range(len(contour)):
+                    save_image(equalize(contour[i]), f'{PATH}contour_outputs/{prefix}_ID{label_hifa}_{i}_contour.png')
+        
+        if load[2]:
+            with open(f'{PATH}distance_outputs/{prefix}_ID{label_hifa}_distance.pkl', 'rb') as f:
+                distance = pickle.load(f)
+            print(f"Distance ID{label_hifa} loaded!!")
+        else:
+            distance = max_dist_3D(hifa, contour, contours_pos)
+            if save:
+                with open(f'{PATH}distance_outputs/{prefix}_ID{label_hifa}_distance.pkl', 'wb') as f:
+                    pickle.dump(distance, f)
+                for i in range(len(distance)):
+                    save_image(equalize(distance[i]), f'{PATH}distance_outputs/{prefix}_ID{label_hifa}_{i}_distance.png')
+
+        skeleton = esqueletonize_3D(distance)
+        if save:
+            for i in range(len(skeleton)):
+                save_image(equalize(skeleton[i]), f'{PATH}skeleton_outputs/{prefix}_ID{label_hifa}_{i}_skeleton.png')

@@ -6,6 +6,7 @@ from skimage.measure import regionprops
 from skimage.color import label2rgb
 from skimage.morphology import skeletonize
 from collections import deque
+import pickle
 
 import skeleton as ske
 
@@ -204,17 +205,37 @@ def separate_hifas_length(hifas, hifas_labels):
     return length_dict
 
 
-def segmentate_matrix(matrix, prefix, save=False):
-    segmentated = []
-    for i in range(matrix.shape[0]):
-        segmentated.append(segmentation(i, matrix, prefix))
-        if save: save_image(segmentated[i], f'{PATH}segmentation_outputs/{prefix}_{i}_segmentation.png')
-    regions_found = region_growing3D(np.array(segmentated))
-    props_dict = get_props_per_region(regions_found)
-    regions_found = remove_noise(regions_found, props_dict)
-    spores, hifas, hifas_labels = classification(regions_found, props_dict)
-    if save:
-        colorize_image(segmentated, spores, f"{prefix}_spores")
-        colorize_image(segmentated, hifas, f"{prefix}_hifas")
-    contours = ske.get_contours(regions_found, hifas_labels, prefix, save_image, equalize, save=save) 
+def segmentate_matrix(matrix, prefix, save=False, load=[True, True, True, False]):
+    if load[0]:
+        with open(f'{PATH}classification_outputs/{prefix}_spores.pkl', 'rb') as f:
+            spores = pickle.load(f)
+        with open(f'{PATH}classification_outputs/{prefix}_hifas.pkl', 'rb') as f:
+            hifas = pickle.load(f)
+        with open(f'{PATH}classification_outputs/{prefix}_regions_found.pkl', 'rb') as f:
+            regions_found = pickle.load(f)
+        with open(f'{PATH}classification_outputs/{prefix}_hifas_labels.pkl', 'rb') as f:
+            hifas_labels = pickle.load(f)
+        print("Segmentation and classification loaded!!")
+    else:
+        segmentated = []
+        for i in range(matrix.shape[0]):
+            segmentated.append(segmentation(i, matrix, prefix))
+            if save: save_image(segmentated[i], f'{PATH}segmentation_outputs/{prefix}_{i}_segmentation.png')
+        regions_found = region_growing3D(np.array(segmentated))
+        props_dict = get_props_per_region(regions_found)
+        regions_found = remove_noise(regions_found, props_dict)
+        spores, hifas, hifas_labels = classification(regions_found, props_dict)
+        if save:
+            colorize_image(segmentated, spores, f"{prefix}_spores")
+            colorize_image(segmentated, hifas, f"{prefix}_hifas")
+            with open(f'{PATH}classification_outputs/{prefix}_spores.pkl', 'wb') as f:
+                pickle.dump(spores, f)
+            with open(f'{PATH}classification_outputs/{prefix}_hifas.pkl', 'wb') as f:
+                pickle.dump(hifas, f)
+            with open(f'{PATH}classification_outputs/{prefix}_regions_found.pkl', 'wb') as f:
+                pickle.dump(regions_found, f)
+            with open(f'{PATH}classification_outputs/{prefix}_hifas_labels.pkl', 'wb') as f:
+                pickle.dump(hifas_labels, f)
+            
+    contours = ske.get_contours(regions_found, hifas_labels, prefix, save_image, equalize, save=save, load=load) 
     

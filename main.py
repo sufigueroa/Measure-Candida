@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 
 from utils import *
 
-prefix = "med"
+load_from = [True, True, True, False]  # Segemntation, Contour, Distance, Skeleton
+prefix = "low"
 
 if prefix == "low":
     PATH = 'images/Low concentration 1.tiff'
@@ -18,4 +19,4 @@ elif prefix == "high":
 im = read_tiff(PATH)
 im = im[:60] if prefix=="med" else im
 im = isotropic_interpolation(im)
-segmentate_matrix(im, prefix, save=True)
+segmentate_matrix(im, prefix, save=True, load=load_from)
