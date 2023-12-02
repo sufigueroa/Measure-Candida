@@ -106,8 +106,6 @@ def max_dist_3D(hifa, contour, contours_pos):
         for neigh in neighbours:
             if hifa[neigh] and not contour[neigh]:
                 points_to_visit.append(neigh)
-                # if neigh not in points_to_visit:
-                #     points_to_visit.append(neigh)
 
     while len(points_to_visit) > 0:
         point = points_to_visit.popleft()
@@ -116,7 +114,6 @@ def max_dist_3D(hifa, contour, contours_pos):
         min_dist = None
         for neigh in neighbours:
             if not hifa[neigh]: continue
-            # if not contour[neigh] and neigh not in points_to_visit:
             if not contour[neigh]:
                 points_to_visit.append(neigh)
                 continue
@@ -130,10 +127,21 @@ def max_dist_3D(hifa, contour, contours_pos):
     return contour
 
 def esqueletonize_3D(distance):
-    pixeles = np.where(distance[0] > 0)
-    print(pixeles)
-
-    return distance
+    esqueleton = np.zeros(distance.shape)
+    for i in range(len(distance)):
+        ys, xs = np.where(distance[i] > 0)
+        for x, y in zip(xs, ys):
+            coor = (i, y, x)
+            near_neighbours = get_neigh(coor, distance.shape)
+            all_neigh = set(near_neighbours)
+            for neigh in near_neighbours:
+                all_neigh.update(get_neigh(neigh, distance.shape))
+            pixels = [distance[neigh] for neigh in all_neigh]
+            # quantile = np.quantile(pixels, .9)
+            max_value = np.max(pixels)
+            if distance[coor] >= max_value:
+                esqueleton[coor] = 255
+    return [np.logical_or.reduce(esqueleton)]
 
 def get_contours(hifas, label_hifas, prefix, save_image, equalize, save=False, load=[True, True, True, False]):
     for label_hifa in label_hifas:

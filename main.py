@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from utils import *
 
 load_from = [True, True, True, False]  # Segemntation, Contour, Distance, Skeleton
-prefix = "low"
+prefix = "high"
 
 if prefix == "low":
     PATH = 'images/Low concentration 1.tiff'
